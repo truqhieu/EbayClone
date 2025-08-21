@@ -1,72 +1,116 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9999/api';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:9999/api";
 
-// Async thunk for fetching conversations
+// Async thunk: fetch conversations
 export const fetchConversations = createAsyncThunk(
-  'chat/fetchConversations',
+  "chat/fetchConversations",
   async (_, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue('No token found');
-      }
-      
+      if (!token) return rejectWithValue("No token found");
+
       const response = await axios.get(`${API_URL}/chat/conversations`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
       return response.data.conversations;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch conversations');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch conversations"
+      );
     }
   }
 );
 
-// Async thunk for fetching messages in a conversation
+// Async thunk: fetch messages in conversation
 export const fetchMessages = createAsyncThunk(
-  'chat/fetchMessages',
+  "chat/fetchMessages",
   async (conversationId, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue('No token found');
-      }
-      
+      if (!token) return rejectWithValue("No token found");
+
       const response = await axios.get(
         `${API_URL}/chat/conversations/${conversationId}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      return {
-        conversationId,
-        messages: response.data.messages
-      };
+
+      return { conversationId, messages: response.data.messages };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch messages');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch messages"
+      );
     }
   }
 );
 
-// Async thunk for starting a new conversation
+// Async thunk: start conversation
 export const startConversation = createAsyncThunk(
-  'chat/startConversation',
+  "chat/startConversation",
   async (userId, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
-      if (!token) {
-        return rejectWithValue('No token found');
-      }
-      
+      if (!token) return rejectWithValue("No token found");
+
       const response = await axios.get(
         `${API_URL}/chat/conversations/user/${userId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       return response.data.conversation;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to start conversation');
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to start conversation"
+      );
+    }
+  }
+);
+
+// 🔹 Async thunk: delete message
+export const deleteMessage = createAsyncThunk(
+  "chat/deleteMessage",
+  async (messageId, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) return rejectWithValue("No token found");
+
+      const response = await axios.delete(
+        `${API_URL}/chat/messages/${messageId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return response.data; // { deletedMessageId, conversationId }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete message"
+      );
+    }
+  }
+);
+
+// 🔹 NEW: Async thunk: delete conversation
+export const deleteConversation = createAsyncThunk(
+  "chat/deleteConversation",
+  async (conversationId, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      if (!token) return rejectWithValue("No token found");
+
+      const response = await axios.delete(
+        `${API_URL}/chat/conversations/${conversationId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      return { conversationId, ...response.data }; // Return conversationId for state update
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to delete conversation"
+      );
     }
   }
 );
@@ -78,11 +122,11 @@ const initialState = {
   loading: false,
   error: null,
   onlineUsers: {},
-  typingUsers: {}
+  typingUsers: {},
 };
 
 const chatSlice = createSlice({
-  name: 'chat',
+  name: "chat",
   initialState,
   reducers: {
     setActiveConversation: (state, action) => {
@@ -94,16 +138,13 @@ const chatSlice = createSlice({
         state.messages[conversationId] = [];
       }
       state.messages[conversationId].push(message);
-      
-      // Update the last message of the conversation
+
+      // Update lastMessage
       const conversationIndex = state.conversations.findIndex(
-        conv => conv._id === conversationId
+        (conv) => conv._id === conversationId
       );
-      
       if (conversationIndex !== -1) {
         state.conversations[conversationIndex].lastMessage = message;
-        
-        // Move this conversation to the top
         const conversation = state.conversations[conversationIndex];
         state.conversations.splice(conversationIndex, 1);
         state.conversations.unshift(conversation);
@@ -111,55 +152,48 @@ const chatSlice = createSlice({
     },
     markMessagesAsRead: (state, action) => {
       const { conversationId, messageIds } = action.payload;
-      
       if (state.messages[conversationId]) {
         state.messages[conversationId] = state.messages[conversationId].map(
-          message => messageIds.includes(message._id) 
-            ? { ...message, read: true } 
-            : message
+          (message) =>
+            messageIds.includes(message._id)
+              ? { ...message, read: true }
+              : message
         );
       }
-      
-      // Update unread count for this conversation
       const conversationIndex = state.conversations.findIndex(
-        conv => conv._id === conversationId
+        (conv) => conv._id === conversationId
       );
-      
       if (conversationIndex !== -1) {
         state.conversations[conversationIndex].unreadCount = 0;
       }
     },
     updateOnlineStatus: (state, action) => {
       const { userId, status } = action.payload;
-      state.onlineUsers[userId] = status === 'online';
+      state.onlineUsers[userId] = status === "online";
     },
     updateTypingStatus: (state, action) => {
       const { userId, conversationId, isTyping } = action.payload;
-      
       if (!state.typingUsers[conversationId]) {
         state.typingUsers[conversationId] = {};
       }
-      
       state.typingUsers[conversationId][userId] = isTyping;
     },
     incrementUnreadCount: (state, action) => {
       const { conversationId } = action.payload;
       const conversationIndex = state.conversations.findIndex(
-        conv => conv._id === conversationId
+        (conv) => conv._id === conversationId
       );
-      
       if (conversationIndex !== -1) {
-        const currentCount = state.conversations[conversationIndex].unreadCount || 0;
+        const currentCount =
+          state.conversations[conversationIndex].unreadCount || 0;
         state.conversations[conversationIndex].unreadCount = currentCount + 1;
       }
     },
-    clearChatState: (state) => {
-      return initialState;
-    }
+    clearChatState: () => initialState,
   },
   extraReducers: (builder) => {
     builder
-      // Handle fetchConversations
+      // fetchConversations
       .addCase(fetchConversations.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -172,54 +206,82 @@ const chatSlice = createSlice({
         state.error = action.payload;
         state.loading = false;
       })
-      
-      // Handle fetchMessages
-      .addCase(fetchMessages.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+
+      // fetchMessages
       .addCase(fetchMessages.fulfilled, (state, action) => {
         const { conversationId, messages } = action.payload;
         state.messages[conversationId] = messages;
         state.loading = false;
-        
-        // Reset unread count
+
         const conversationIndex = state.conversations.findIndex(
-          conv => conv._id === conversationId
+          (conv) => conv._id === conversationId
         );
-        
         if (conversationIndex !== -1) {
           state.conversations[conversationIndex].unreadCount = 0;
         }
       })
-      .addCase(fetchMessages.rejected, (state, action) => {
-        state.error = action.payload;
-        state.loading = false;
-      })
-      
-      // Handle startConversation
-      .addCase(startConversation.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+
+      // startConversation
       .addCase(startConversation.fulfilled, (state, action) => {
-        // Check if conversation already exists
         const existingIndex = state.conversations.findIndex(
-          conv => conv._id === action.payload._id
+          (conv) => conv._id === action.payload._id
         );
-        
         if (existingIndex === -1) {
           state.conversations.unshift(action.payload);
         }
-        
         state.activeConversation = action.payload._id;
         state.loading = false;
       })
-      .addCase(startConversation.rejected, (state, action) => {
+
+      // 🔹 deleteMessage
+      .addCase(deleteMessage.fulfilled, (state, action) => {
+        const { deletedMessageId, conversationId } = action.payload;
+
+        if (state.messages[conversationId]) {
+          state.messages[conversationId] = state.messages[
+            conversationId
+          ].filter((msg) => msg._id !== deletedMessageId);
+        }
+
+        const convIndex = state.conversations.findIndex(
+          (c) => c._id === conversationId
+        );
+        if (convIndex !== -1) {
+          const latestMsg =
+            state.messages[conversationId]?.[
+              state.messages[conversationId].length - 1
+            ] || null;
+          state.conversations[convIndex].lastMessage = latestMsg;
+        }
+      })
+
+      // 🔹 NEW: deleteConversation
+      .addCase(deleteConversation.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deleteConversation.fulfilled, (state, action) => {
+        const { conversationId } = action.payload;
+
+        // Remove conversation from conversations array
+        state.conversations = state.conversations.filter(
+          (conv) => conv._id !== conversationId
+        );
+
+        // Remove messages for this conversation
+        delete state.messages[conversationId];
+
+        // Clear active conversation if it's the one being deleted
+        if (state.activeConversation === conversationId) {
+          state.activeConversation = null;
+        }
+
+        state.loading = false;
+      })
+      .addCase(deleteConversation.rejected, (state, action) => {
         state.error = action.payload;
         state.loading = false;
       });
-  }
+  },
 });
 
 export const {
@@ -229,7 +291,7 @@ export const {
   updateOnlineStatus,
   updateTypingStatus,
   incrementUnreadCount,
-  clearChatState
+  clearChatState,
 } = chatSlice.actions;
 
-export default chatSlice.reducer; 
+export default chatSlice.reducer;

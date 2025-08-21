@@ -1,6 +1,6 @@
-const express = require('express');
-const { authMiddleware } = require('../middleware/auth.middleware');
-const chatController = require('../controllers/chatController');
+const express = require("express");
+const { authMiddleware } = require("../middleware/auth.middleware");
+const chatController = require("../controllers/chatController");
 
 const chatRouter = express.Router();
 
@@ -8,12 +8,27 @@ const chatRouter = express.Router();
 chatRouter.use(authMiddleware);
 
 // Get all conversations for the current user
-chatRouter.get('/conversations', chatController.getConversations);
+chatRouter.get("/conversations", chatController.getConversations);
 
 // Get messages for a specific conversation
-chatRouter.get('/conversations/:conversationId/messages', chatController.getMessages);
+chatRouter.get(
+  "/conversations/:conversationId/messages",
+  chatController.getMessages
+);
 
 // Find or create a conversation with another user
-chatRouter.get('/conversations/user/:recipientId', chatController.findOrCreateConversation);
+chatRouter.get(
+  "/conversations/user/:recipientId",
+  chatController.findOrCreateConversation
+);
 
-module.exports = chatRouter; 
+// Delete a specific message
+chatRouter.delete("/messages/:messageId", chatController.deleteMessage);
+
+// Delete an entire conversation
+chatRouter.delete(
+  "/conversations/:conversationId",
+  chatController.deleteConversation
+);
+
+module.exports = chatRouter;
