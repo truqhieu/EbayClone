@@ -3,21 +3,23 @@ const Schema = mongoose.Schema;
 
 const conversationSchema = new Schema(
   {
-    participants: [{
-      type: Schema.Types.ObjectId,
-      ref: "User"
-    }],
+    participants: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     lastMessage: {
       type: Schema.Types.ObjectId,
-      ref: "Message"
+      ref: "Message",
     },
     unreadCount: {
       type: Map,
       of: Number,
-      default: {}
-    }
+      default: {},
+    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Conversation", conversationSchema); 
+module.exports = mongoose.model("Conversation", conversationSchema);
