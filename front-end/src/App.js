@@ -61,6 +61,7 @@ import ManageStore from "./pages/DashboardAdmin/ManageShop/ManageStore";
 import ManageProductA from "./pages/DashboardAdmin/ManageProduct/ManageProduct";
 import ManageVoucher from "./pages/DashboardAdmin/ManageVoucher/ManageVoucher";
 import AdminDashboardLayout from "./pages/DashboardAdmin/ManagerDashboardAdminLaydout";
+import SellerProfile from "./pages/Profile/SellerProfile.jsx";
 
 const Layout = () => {
   return (
@@ -98,6 +99,10 @@ const router = createBrowserRouter(
         <Route path="/payment" element={<Payment />}></Route>
         <Route path="/payment-result" element={<PaymentResult />}></Route>
         <Route path="/profile" element={<Profile />}></Route>
+        <Route
+          path="/seller/profile/:sellerId"
+          element={<SellerProfile />}
+        ></Route>
         <Route path="/order-history" element={<OrderHistory />}></Route>
         <Route path="/order-details/:id" element={<OrderDetail />}></Route>
         <Route path="/my-reviews" element={<MyReviews />}></Route>
