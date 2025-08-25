@@ -1,23 +1,24 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:9999';
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:9999";
 
 // Async thunk for fetching user profile
 export const fetchUserProfile = createAsyncThunk(
-  'profile/fetchUserProfile',
+  "profile/fetchUserProfile",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
       if (!token) {
-        return rejectWithValue('No authentication token found');
+        return rejectWithValue("No authentication token found");
       }
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/buyers/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       // Handle different response structures
       if (response.data.success && response.data.user) {
         return response.data.user;
@@ -26,7 +27,7 @@ export const fetchUserProfile = createAsyncThunk(
       } else if (response.data._id) {
         return response.data;
       } else {
-        return rejectWithValue('Invalid response format from server');
+        return rejectWithValue("Invalid response format from server");
       }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -34,23 +35,48 @@ export const fetchUserProfile = createAsyncThunk(
   }
 );
 
+export const fetchSellerProfile = createAsyncThunk(
+  "profile/fetchSellerProfile",
+  async (sellerId, { rejectWithValue }) => {
+    try {
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+      if (!token) {
+        return rejectWithValue("No authentication token found");
+      }
+
+      const res = await axios.get(
+        `${API_BASE_URL}/api/buyers/seller/profile/${sellerId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.data.data; // vì backend trả { success, data }
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 // Async thunk for updating user profile
 export const updateUserProfile = createAsyncThunk(
-  'profile/updateUserProfile',
+  "profile/updateUserProfile",
   async (userData, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-      
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
       if (!token) {
-        return rejectWithValue('No authentication token found');
+        return rejectWithValue("No authentication token found");
       }
-      
+
       const response = await axios.put(
         `${API_BASE_URL}/api/buyers/profile`,
         userData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Handle different response structures
       if (response.data.success && response.data.user) {
         return response.data.user;
@@ -59,7 +85,7 @@ export const updateUserProfile = createAsyncThunk(
       } else if (response.data._id) {
         return response.data;
       } else {
-        return rejectWithValue('Invalid response format from server');
+        return rejectWithValue("Invalid response format from server");
       }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -69,15 +95,16 @@ export const updateUserProfile = createAsyncThunk(
 
 const initialState = {
   user: null,
+  seller: null,
   loading: false,
   error: null,
   updateSuccess: false,
   updateLoading: false,
-  updateError: null
+  updateError: null,
 };
 
 const profileSlice = createSlice({
-  name: 'profile',
+  name: "profile",
   initialState,
   reducers: {
     clearProfileErrors: (state) => {
@@ -87,7 +114,7 @@ const profileSlice = createSlice({
     resetUpdateStatus: (state) => {
       state.updateSuccess = false;
       state.updateError = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -104,7 +131,21 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
+      // Fetch seller profile
+      .addCase(fetchSellerProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSellerProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.seller = action.payload;
+      })
+      .addCase(fetchSellerProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
       // Update profile cases
       .addCase(updateUserProfile.pending, (state) => {
         state.updateLoading = true;
@@ -121,9 +162,9 @@ const profileSlice = createSlice({
         state.updateError = action.payload;
         state.updateSuccess = false;
       });
-  }
+  },
 });
 
 export const { clearProfileErrors, resetUpdateStatus } = profileSlice.actions;
 
-export default profileSlice.reducer; 
+export default profileSlice.reducer;
