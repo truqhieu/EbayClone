@@ -62,6 +62,8 @@ import ManageProductA from "./pages/DashboardAdmin/ManageProduct/ManageProduct";
 import ManageVoucher from "./pages/DashboardAdmin/ManageVoucher/ManageVoucher";
 import AdminDashboardLayout from "./pages/DashboardAdmin/ManagerDashboardAdminLaydout";
 import SellerProfile from "./pages/Profile/SellerProfile.jsx";
+import Complaints from "./pages/Complaints/Complaints.js";
+import ManageComplaint from "./pages/DashboardAdmin/ManageComplaint/AdminComplaint.js";
 
 const Layout = () => {
   return (
@@ -99,6 +101,7 @@ const router = createBrowserRouter(
         <Route path="/payment" element={<Payment />}></Route>
         <Route path="/payment-result" element={<PaymentResult />}></Route>
         <Route path="/profile" element={<Profile />}></Route>
+        <Route path="/complaints" element={<Complaints />}></Route>
         <Route
           path="/seller/profile/:sellerId"
           element={<SellerProfile />}
@@ -154,6 +157,10 @@ const router = createBrowserRouter(
         <Route
           path="/admin/manage-vouchers"
           element={<ManageVoucher />}
+        ></Route>
+        <Route
+          path="/admin/manage-complaints"
+          element={<ManageComplaint />}
         ></Route>
       </Route>
 
