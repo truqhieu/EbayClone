@@ -9,6 +9,7 @@ const feedbackSchema = new Schema(
       required: true,
       unique: true,
     },
+    reputationScore: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
     totalReviews: { type: Number, default: 0 },
     positiveRate: { type: Number, default: 0 },
