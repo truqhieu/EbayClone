@@ -174,7 +174,9 @@ const MyDisputes = () => {
                   </div>
                   
                   <h3 className="font-medium text-gray-900">
-                    {dispute.orderItemId?.productId?.name || 'Product Unavailable'}
+
+
+                    {dispute.orderItemId?.productId?.title|| 'Product Unavailable'}
                   </h3>
                 </div>
                 <div className="flex items-center gap-3">

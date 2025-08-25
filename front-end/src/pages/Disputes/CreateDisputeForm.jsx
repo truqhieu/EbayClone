@@ -68,12 +68,12 @@ const CreateDisputeForm = () => {
       >
         <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
           <div className="flex items-center justify-center mb-6">
-            <div className="bg-red-100 p-3 rounded-full">
-              <FaTimes className="text-red-600 text-2xl" />
+            <div className="bg-gray-100 p-3 rounded-full">
+              <FaCheck className="text-green-600 text-2xl" />
             </div>
           </div>
           
-          <h1 className="text-2xl font-bold text-center mb-4">Cannot Create Dispute</h1>
+          <h1 className="text-2xl font-bold text-center mb-4">You have created a dispute</h1>
           <p className="text-gray-700 text-center mb-6">
             {eligibility.message}
           </p>

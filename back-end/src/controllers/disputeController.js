@@ -6,10 +6,10 @@ exports.checkDisputeEligibility = async (req, res) => {
   try {
     const { orderItemId } = req.params;
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     console.log("Checking eligibility for orderItemId:", orderItemId);
     console.log("User ID:", userId);
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
@@ -17,29 +17,29 @@ exports.checkDisputeEligibility = async (req, res) => {
 
     // Verify that the order item exists
     const orderItem = await OrderItem.findById(orderItemId);
-    
+
     if (!orderItem) {
       return res.status(404).json({ message: "Order item not found" });
     }
-    
+
     console.log("Order item found:", orderItem);
-    
+
     // Check if order ID exists
     if (!orderItem.orderId) {
       console.log("Order ID is missing in the orderItem:", orderItem);
       return res.status(404).json({ message: "Order reference not found in this order item" });
     }
-    
+
     // Now get the order separately to ensure we have the correct data
     const order = await mongoose.model("Order").findById(orderItem.orderId);
-    
+
     if (!order) {
       console.log("Order not found for orderItem:", orderItem);
       return res.status(404).json({ message: "Order information not found" });
     }
-    
+
     console.log("Order found:", order);
-    
+
     // Check if the order belongs to the user making the request
     if (!order.buyerId) {
       console.log("Order has no buyerId:", order);
@@ -48,22 +48,22 @@ exports.checkDisputeEligibility = async (req, res) => {
 
     console.log("Order buyerId:", order.buyerId);
     console.log("User ID for comparison:", userId);
-    
+
     // Convert both to strings explicitly for safe comparison
     const orderBuyerId = String(order.buyerId);
     const currentUserId = String(userId);
-    
+
     if (orderBuyerId !== currentUserId) {
-      console.log("User IDs don't match:", {orderBuyerId, currentUserId});
-      return res.status(403).json({ 
+      console.log("User IDs don't match:", { orderBuyerId, currentUserId });
+      return res.status(403).json({
         eligible: false,
-        message: "You can only create disputes for your own orders" 
+        message: "You can only create disputes for your own orders"
       });
     }
 
     // Check if the order item status allows disputes
     if (orderItem.status !== "shipped") {
-      return res.status(200).json({ 
+      return res.status(200).json({
         eligible: false,
         message: "You can only create disputes for shipped items"
       });
@@ -72,7 +72,7 @@ exports.checkDisputeEligibility = async (req, res) => {
     // Check if a dispute for this order item already exists
     const existingDispute = await Dispute.findOne({ orderItemId });
     if (existingDispute) {
-      return res.status(200).json({ 
+      return res.status(200).json({
         eligible: false,
         message: "A dispute for this order item already exists",
         disputeId: existingDispute._id
@@ -95,10 +95,10 @@ exports.createDispute = async (req, res) => {
   try {
     const { orderItemId, description } = req.body;
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     console.log("Creating dispute for orderItemId:", orderItemId);
     console.log("User ID:", userId);
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
@@ -106,29 +106,29 @@ exports.createDispute = async (req, res) => {
 
     // Verify that the order item exists
     const orderItem = await OrderItem.findById(orderItemId);
-    
+
     if (!orderItem) {
       return res.status(404).json({ message: "Order item not found" });
     }
-    
+
     console.log("Order item found:", orderItem);
-    
+
     // Check if order ID exists
     if (!orderItem.orderId) {
       console.log("Order ID is missing in the orderItem:", orderItem);
       return res.status(404).json({ message: "Order reference not found in this order item" });
     }
-    
+
     // Now get the order separately to ensure we have the correct data
     const order = await mongoose.model("Order").findById(orderItem.orderId);
-    
+
     if (!order) {
       console.log("Order not found for orderItem:", orderItem);
       return res.status(404).json({ message: "Order information not found" });
     }
-    
+
     console.log("Order found:", order);
-    
+
     // Check if the order belongs to the user making the request
     if (!order.buyerId) {
       console.log("Order has no buyerId:", order);
@@ -137,19 +137,19 @@ exports.createDispute = async (req, res) => {
 
     console.log("Order buyerId:", order.buyerId);
     console.log("User ID for comparison:", userId);
-    
+
     // Convert both to strings explicitly for safe comparison
     const orderBuyerId = String(order.buyerId);
     const currentUserId = String(userId);
-    
+
     if (orderBuyerId !== currentUserId) {
-      console.log("User IDs don't match:", {orderBuyerId, currentUserId});
+      console.log("User IDs don't match:", { orderBuyerId, currentUserId });
       return res.status(403).json({ message: "You can only create disputes for your own orders" });
     }
-    
+
     // Check if the order item status allows disputes
     if (orderItem.status !== "shipped") {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "You can only create disputes for shipped items",
         currentStatus: orderItem.status
       });
@@ -184,22 +184,22 @@ exports.createDispute = async (req, res) => {
 exports.getBuyerDisputes = async (req, res) => {
   try {
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
     }
-    
+
     const disputes = await Dispute.find({ raisedBy: userId })
       .populate({
         path: 'orderItemId',
-        populate: {
-          path: 'productId',
-          select: 'name images price'
-        }
+        populate: 
+          { path: 'productId', select: 'title images price' },
+         
+        
       })
       .sort({ createdAt: -1 });
-    
+
     res.status(200).json({
       success: true,
       count: disputes.length,
@@ -216,12 +216,12 @@ exports.getDisputeDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
     }
-    
+
     const dispute = await Dispute.findById(id)
       .populate({
         path: 'orderItemId',
@@ -236,16 +236,16 @@ exports.getDisputeDetails = async (req, res) => {
           }
         ]
       });
-    
+
     if (!dispute) {
       return res.status(404).json({ message: "Dispute not found" });
     }
-    
+
     // Check if the dispute belongs to the user making the request
     if (dispute.raisedBy.toString() !== userId) {
       return res.status(403).json({ message: "You can only view your own disputes" });
     }
-    
+
     res.status(200).json({
       success: true,
       dispute
@@ -262,34 +262,34 @@ exports.updateDispute = async (req, res) => {
     const { id } = req.params;
     const { description } = req.body;
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
     }
-    
+
     const dispute = await Dispute.findById(id);
-    
+
     if (!dispute) {
       return res.status(404).json({ message: "Dispute not found" });
     }
-    
+
     // Check if the dispute belongs to the user making the request
     if (dispute.raisedBy.toString() !== userId) {
       return res.status(403).json({ message: "You can only update your own disputes" });
     }
-    
+
     // Only allow updates if the dispute is still open
     if (dispute.status !== "open") {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Cannot update dispute that is not in 'open' status",
         currentStatus: dispute.status
       });
     }
-    
+
     dispute.description = description;
     await dispute.save();
-    
+
     res.status(200).json({
       success: true,
       message: "Dispute updated successfully",
@@ -306,35 +306,35 @@ exports.cancelDispute = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id; // Sửa từ _id thành id
-    
+
     if (!userId) {
       console.log("User ID is missing in the request:", req.user);
       return res.status(401).json({ message: "Authentication required. User ID not found." });
     }
-    
+
     const dispute = await Dispute.findById(id);
-    
+
     if (!dispute) {
       return res.status(404).json({ message: "Dispute not found" });
     }
-    
+
     // Check if the dispute belongs to the user making the request
     if (dispute.raisedBy.toString() !== userId) {
       return res.status(403).json({ message: "You can only cancel your own disputes" });
     }
-    
+
     // Only allow cancellation if the dispute is still open or under review
     if (!["open", "under_review"].includes(dispute.status)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: "Cannot cancel dispute that has been resolved or closed",
         currentStatus: dispute.status
       });
     }
-    
+
     dispute.status = "closed";
     dispute.resolution = "Cancelled by buyer";
     await dispute.save();
-    
+
     res.status(200).json({
       success: true,
       message: "Dispute cancelled successfully"
