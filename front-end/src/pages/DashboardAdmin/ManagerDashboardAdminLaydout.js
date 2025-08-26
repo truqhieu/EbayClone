@@ -176,8 +176,8 @@ export default function AdminDashboardLayout() {
   const toggleDrawer = () => {
     setOpen(!open);
   };
-  const [adminInfo, setAdminInfo] = useState(null); 
-  
+  const [adminInfo, setAdminInfo] = useState(null);
+
   // Get current path to highlight active menu item
   const currentPath = location.pathname;
 
@@ -211,7 +211,7 @@ export default function AdminDashboardLayout() {
   const [openAdminMgmt, setOpenAdminMgmt] = React.useState(
     currentPath.includes("/manage-users") || currentPath.includes("/manage-stores")
   );
-  
+
   const handleToggleAdminMgmt = () => {
     setOpenAdminMgmt((prev) => !prev);
   };
@@ -274,7 +274,7 @@ export default function AdminDashboardLayout() {
             >
               {dashboardTitle}
             </Typography>
-            
+
             {/* Notification icon */}
             <Tooltip title="Notifications">
               <IconButton color="primary" sx={{ mr: 1 }}>
@@ -283,21 +283,21 @@ export default function AdminDashboardLayout() {
                 </Badge>
               </IconButton>
             </Tooltip>
-            
+
             {/* Settings icon */}
             <Tooltip title="Settings">
               <IconButton color="primary" sx={{ mr: 1 }}>
                 <SettingsIcon />
               </IconButton>
             </Tooltip>
-            
+
             {/* Help icon */}
             <Tooltip title="Help">
               <IconButton color="primary" sx={{ mr: 2 }}>
                 <HelpOutlineIcon />
               </IconButton>
             </Tooltip>
-            
+
             {adminInfo ? (
               <Chip
                 avatar={
@@ -309,9 +309,9 @@ export default function AdminDashboardLayout() {
                 label={adminInfo.fullname || "Admin"}
                 color="primary"
                 variant="outlined"
-                sx={{ 
-                  ml: 1, 
-                  fontWeight: 600, 
+                sx={{
+                  ml: 1,
+                  fontWeight: 600,
                   fontSize: 16,
                   "&:hover": {
                     background: "rgba(26, 35, 126, 0.08)",
@@ -350,8 +350,8 @@ export default function AdminDashboardLayout() {
           <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
           <List component="nav">
             <React.Fragment>
-              <ListItemButton 
-                onClick={handleOnclickOverview} 
+              <ListItemButton
+                onClick={handleOnclickOverview}
                 selected={currentPath === "/admin"}
               >
                 <ListItemIcon sx={{ color: "primary.contrastText" }}>
@@ -360,6 +360,20 @@ export default function AdminDashboardLayout() {
                 <ListItemText primary="Dashboard Overview" primaryTypographyProps={{ fontWeight: currentPath === "/admin" ? 'bold' : 'normal' }} />
               </ListItemButton>
               
+              <ListItemButton
+                onClick={() => navigate("/admin/manage-disputes")}
+                selected={currentPath === "/admin/manage-disputes"}
+              >
+                <ListItemIcon sx={{ color: "primary.contrastText" }}>
+                  <FeedbackIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Manage Disputes"
+                  primaryTypographyProps={{ fontWeight: currentPath === "/admin/manage-disputes" ? 'bold' : 'normal' }}
+                />
+              </ListItemButton>
+
+
               <ListItemButton onClick={handleToggleAdminMgmt}>
                 <ListItemIcon sx={{ color: "primary.contrastText" }}>
                   <PeopleIcon />
@@ -367,69 +381,69 @@ export default function AdminDashboardLayout() {
                 <ListItemText primary="User Management" />
                 {openAdminMgmt ? <ExpandLess sx={{ color: "primary.contrastText" }} /> : <ExpandMore sx={{ color: "primary.contrastText" }} />}
               </ListItemButton>
-              
+
               <Collapse in={openAdminMgmt} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  <ListItemButton 
-                    sx={{ pl: 4 }} 
+                  <ListItemButton
+                    sx={{ pl: 4 }}
                     onClick={handleOnclickUsers}
                     selected={currentPath === "/admin/manage-users"}
                   >
                     <ListItemIcon sx={{ color: "primary.contrastText" }}>
                       <PeopleIcon />
                     </ListItemIcon>
-                    <ListItemText 
-                      primary="Manage Users" 
-                      primaryTypographyProps={{ 
-                        fontWeight: currentPath === "/admin/manage-users" ? 'bold' : 'normal' 
+                    <ListItemText
+                      primary="Manage Users"
+                      primaryTypographyProps={{
+                        fontWeight: currentPath === "/admin/manage-users" ? 'bold' : 'normal'
                       }}
                     />
                   </ListItemButton>
-                  
-                  <ListItemButton 
-                    sx={{ pl: 4 }} 
+
+                  <ListItemButton
+                    sx={{ pl: 4 }}
                     onClick={handleOnclickStores}
                     selected={currentPath === "/admin/manage-stores"}
                   >
                     <ListItemIcon sx={{ color: "primary.contrastText" }}>
                       <StoreIcon />
                     </ListItemIcon>
-                    <ListItemText 
-                      primary="Manage Shops" 
-                      primaryTypographyProps={{ 
-                        fontWeight: currentPath === "/admin/manage-stores" ? 'bold' : 'normal' 
+                    <ListItemText
+                      primary="Manage Shops"
+                      primaryTypographyProps={{
+                        fontWeight: currentPath === "/admin/manage-stores" ? 'bold' : 'normal'
                       }}
                     />
                   </ListItemButton>
                 </List>
               </Collapse>
-              
-              <ListItemButton 
+
+              <ListItemButton
                 onClick={handleOnclickProducts}
                 selected={currentPath === "/admin/manage-products"}
               >
                 <ListItemIcon sx={{ color: "primary.contrastText" }}>
                   <InventoryIcon />
                 </ListItemIcon>
-                <ListItemText 
-                  primary="Manage Products" 
-                  primaryTypographyProps={{ 
-                    fontWeight: currentPath === "/admin/manage-products" ? 'bold' : 'normal' 
+                <ListItemText
+                  primary="Manage Products"
+                  primaryTypographyProps={{
+                    fontWeight: currentPath === "/admin/manage-products" ? 'bold' : 'normal'
                   }}
                 />
               </ListItemButton>
-              
-              <ListItemButton 
+
+              <ListItemButton
                 onClick={handleOnclickVouchers}
                 selected={currentPath === "/admin/manage-vouchers"}
               >
                 <ListItemIcon sx={{ color: "primary.contrastText" }}>
                   <LocalOfferIcon />
                 </ListItemIcon>
-                <ListItemText 
-                  primary="Manage Vouchers" 
-                  primaryTypographyProps={{ 
-                    fontWeight: currentPath === "/admin/manage-vouchers" ? 'bold' : 'normal' 
+                <ListItemText
+                  primary="Manage Vouchers"
+                  primaryTypographyProps={{
+                    fontWeight: currentPath === "/admin/manage-vouchers" ? 'bold' : 'normal'
                   }}
                 />
               </ListItemButton>
@@ -438,7 +452,7 @@ export default function AdminDashboardLayout() {
             <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.1)" }} />
             <React.Fragment>
 
-              
+
               <ListItemButton onClick={handleOnclickSignout}>
                 <ListItemIcon sx={{ color: "primary.contrastText" }}>
                   <MeetingRoomIcon />

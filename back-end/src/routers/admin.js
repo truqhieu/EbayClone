@@ -9,7 +9,8 @@ const {
 } = require("../middleware/auth.middleware");
 
 // Import các controller functions từ adminController
-const {
+const {getAdminDisputes,
+  resolveDispute,
   // User Management
   getAllUsers,
   getUserDetails,
@@ -124,5 +125,11 @@ router.get('/vouchers/:id', getVoucherById);
 router.put('/vouchers/:id', updateVoucher);
 router.delete('/vouchers/:id', deleteVoucher);
 router.put('/vouchers/:id/toggle-active', toggleVoucherActive);
+// GET: lấy danh sách dispute
+router.get("/disputes", getAdminDisputes);
+
+// POST: admin xử lý dispute
+router.post("/disputes/:id/resolve", resolveDispute);
+
 
 module.exports = router;

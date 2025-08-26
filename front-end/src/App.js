@@ -60,7 +60,9 @@ import ManageUser from "./pages/DashboardAdmin/ManageUser/ManageUser";
 import ManageStore from "./pages/DashboardAdmin/ManageShop/ManageStore";
 import ManageProductA from "./pages/DashboardAdmin/ManageProduct/ManageProduct";
 import ManageVoucher from "./pages/DashboardAdmin/ManageVoucher/ManageVoucher";
+import AdminDisputePage from "./pages/DashboardAdmin/AdminDisputePage/AdminDisputePage";
 import AdminDashboardLayout from "./pages/DashboardAdmin/ManagerDashboardAdminLaydout";
+
 
 
 const Layout = () => {
@@ -131,6 +133,7 @@ const router = createBrowserRouter(
         <Route path="/admin/manage-users" element={<ManageUser />}></Route>
         <Route path="/admin/manage-stores" element={<ManageStore />}></Route>
         <Route path="/admin/manage-vouchers" element={<ManageVoucher />}></Route>
+        <Route path="/admin/manage-disputes" element={<AdminDisputePage />} />
       </Route>
 
       <Route path="/signin" element={<SignIn />}></Route>

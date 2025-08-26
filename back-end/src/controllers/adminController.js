@@ -21,6 +21,8 @@ const { sendEmail } = require("../utils/email");
 const logger = require("../utils/logger");
 const mongoose = require("mongoose");
 
+
+
 // --- Hàm Hỗ Trợ Xử Lý Lỗi (Helper Function for Error Responses) ---
 // Hàm này giúp chuẩn hóa việc xử lý và phản hồi lỗi.
 const handleError = (res, error, message = "Lỗi Máy Chủ", statusCode = 500) => {
@@ -819,7 +821,53 @@ exports.getProductReviewsAndStats = async (req, res) => {
 //     handleError(res, error, "Lỗi khi xóa danh mục");
 //   }
 // };
+// Lấy danh sách dispute cần admin xử lý
+exports.getAdminDisputes = async (req, res) => {
+  try {
+    const disputes = await Dispute.find({ status: "closed" })
+      .populate("orderItemId")
+      .populate("raisedBy", "name email");
 
+    res.json(disputes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Admin xử lý Dispute
+exports.resolveDispute = async (req, res) => {
+  try {
+    const { decision } = req.body; // "buyer" | "seller"
+    const dispute = await Dispute.findById(req.params.id);
+
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    if (dispute.status !== "closed") {
+      return res.status(400).json({ message: "Chỉ xử lý được dispute đã closed" });
+    }
+
+    dispute.status = "resolved";
+    dispute.resolution = decision === "buyer" ? "buyer_wins" : "seller_wins";
+
+    dispute.messages.push({
+      sender: "admin",
+      message:
+        decision === "buyer"
+          ? "Admin quyết định: Người mua thắng khiếu nại."
+          : "Admin quyết định: Người bán thắng khiếu nại.",
+    });
+
+    await dispute.save();
+
+    res.json({ message: "Dispute resolved successfully", dispute });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 exports.getAdminReport = async (req, res) => {
   const { period } = req.query;
   try {
@@ -866,6 +914,7 @@ exports.getAdminReport = async (req, res) => {
     const activeSellerIds = activeSellerIdsAgg.map((s) => s._id);
 
     const [
+      
       orderStats,
       totalUsers,
       topSellers,
