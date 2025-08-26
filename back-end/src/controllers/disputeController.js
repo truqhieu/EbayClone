@@ -161,19 +161,30 @@ exports.createDispute = async (req, res) => {
       return res.status(400).json({ message: "A dispute for this order item already exists" });
     }
 
-    // Create the dispute
+      const expireAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
     const dispute = new Dispute({
       orderItemId,
       raisedBy: userId,
-      description
+      description,
+      status: "under_review",
+      expireAt, 
+      messages: [
+        {
+          sender: "system",
+          message: "Hệ thống đã ghi nhận khiếu nại, shop sẽ phản hồi trong vòng 48h."
+        }
+      ]
     });
 
     await dispute.save();
+
     res.status(201).json({
       success: true,
       message: "Dispute created successfully",
       dispute
     });
+
   } catch (error) {
     console.error("Error creating dispute:", error);
     res.status(500).json({ message: "Error creating dispute", error: error.message });
@@ -193,10 +204,10 @@ exports.getBuyerDisputes = async (req, res) => {
     const disputes = await Dispute.find({ raisedBy: userId })
       .populate({
         path: 'orderItemId',
-        populate: 
+        populate:
           { path: 'productId', select: 'title images price' },
-         
-        
+
+
       })
       .sort({ createdAt: -1 });
 

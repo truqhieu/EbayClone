@@ -6,6 +6,8 @@ const cors = require("cors");
 const { initScheduler } = require("./src/config/scheduler");
 const http = require("http");
 const { initSocketServer } = require("./src/services/socketService");
+// Cron job
+const { initDisputeChecker } = require("./src/cron/disputeChecker");
 
 const app = express();
 dotenv.config(); // Move dotenv.config() before using process.env
@@ -15,6 +17,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -46,11 +49,17 @@ const MONGO_URI = process.env.MONGO_URI;
 // Improve MongoDB connection with error handling
 console.log('Connecting to MongoDB...');
 connect(MONGO_URI)
-  .then(() => console.log('MongoDB connected successfully'))
+  .then(() => {
+    console.log('MongoDB connected successfully');
+    
+    // Chạy cron job sau khi DB đã kết nối
+    initDisputeChecker();
+  })
   .catch(err => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
+
 
 app.use("/api", router);
 

@@ -128,6 +128,7 @@ const CreateDisputeForm = () => {
             >
               <FaCheck className="text-green-600" />
               <p className="text-green-700">Your dispute has been submitted successfully. Redirecting...</p>
+              
             </motion.div>
           )}
         </AnimatePresence>

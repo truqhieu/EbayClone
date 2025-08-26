@@ -12,20 +12,48 @@ const MyDisputes = () => {
   const [expandedDisputes, setExpandedDisputes] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [timeLeft, setTimeLeft] = useState({});
+
 
   useEffect(() => {
     dispatch(fetchUserDisputes());
   }, [dispatch, success]);
-  
+
+
+  //count down
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const updates = {};
+      disputes.forEach(d => {
+        if (d.expireAt) {
+          const now = new Date();
+          const target = new Date(d.expireAt);
+          let diff = target - now;
+          if (diff <= 0) {
+            updates[d._id] = "Expired";
+          } else {
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            updates[d._id] = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+          }
+        }
+      });
+      setTimeLeft(updates);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [disputes]);
+
   // Log disputes để kiểm tra cấu trúc chính xác
   useEffect(() => {
     if (disputes && disputes.length > 0) {
       console.log("Dispute structure:", disputes[0]);
-      
+
       // Kiểm tra cấu trúc của orderItemId
       if (disputes[0].orderItemId) {
         console.log("OrderItem structure:", disputes[0].orderItemId);
-        
+
         // Kiểm tra xem orderId là đối tượng hay string
         if (disputes[0].orderItemId.orderId) {
           console.log("OrderId type:", typeof disputes[0].orderItemId.orderId);
@@ -78,11 +106,11 @@ const MyDisputes = () => {
     .filter(dispute => !statusFilter || dispute.status === statusFilter)
     .filter(dispute => {
       if (!searchQuery) return true;
-      
+
       const productName = dispute.orderItemId?.productId?.name || '';
       const description = dispute.description || '';
       const searchLower = searchQuery.toLowerCase();
-      
+
       return (
         productName.toLowerCase().includes(searchLower) ||
         description.toLowerCase().includes(searchLower)
@@ -91,7 +119,7 @@ const MyDisputes = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4"
@@ -102,7 +130,7 @@ const MyDisputes = () => {
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">My Disputes</h1>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Search field */}
           <div className="relative">
@@ -115,7 +143,7 @@ const MyDisputes = () => {
             />
             <FaSearch className="absolute left-3.5 top-3.5 text-gray-400" />
           </div>
-          
+
           {/* Status filter */}
           <div className="relative">
             <select
@@ -135,7 +163,7 @@ const MyDisputes = () => {
       </motion.div>
 
       {loading ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex flex-col justify-center items-center py-20"
@@ -151,8 +179,8 @@ const MyDisputes = () => {
           className="space-y-4"
         >
           {filteredDisputes.map((dispute, index) => (
-            <motion.div 
-              key={dispute._id} 
+            <motion.div
+              key={dispute._id}
               className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -171,13 +199,25 @@ const MyDisputes = () => {
                     <span className="text-gray-500 text-sm">
                       {formatDate(dispute.createdAt)}
                     </span>
+                    {dispute.status === "under_review" && dispute.expireAt && (
+                      <span className="ml-3 text-red-600 font-semibold">
+                        ⏳ {timeLeft[dispute._id] || "Loading..."}
+                      </span>
+                    )}
+
                   </div>
-                  
+
                   <h3 className="font-medium text-gray-900">
 
 
-                    {dispute.orderItemId?.productId?.title|| 'Product Unavailable'}
+                    {dispute.orderItemId?.productId?.title || 'Product Unavailable'}
                   </h3>
+                  <h5 className="font-medium text-gray-900">
+
+
+                    {dispute?.messages?.[0]?.message || 'no message'}
+
+                  </h5>
                 </div>
                 <div className="flex items-center gap-3">
                   {(dispute.status === 'open' || dispute.status === 'under_review') && (
@@ -188,7 +228,7 @@ const MyDisputes = () => {
                       <FaBan className="text-sm" /> Cancel
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => toggleDisputeExpansion(dispute._id)}
                     className="text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"
                   >
@@ -200,10 +240,10 @@ const MyDisputes = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Expanded Content */}
               {expandedDisputes[dispute._id] && (
-                <motion.div 
+                <motion.div
                   className="p-5"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -215,7 +255,7 @@ const MyDisputes = () => {
                       {dispute.description}
                     </p>
                   </div>
-                  
+
                   {dispute.resolution && (
                     <div>
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Resolution:</h4>
@@ -224,13 +264,13 @@ const MyDisputes = () => {
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="mt-4">
                     {/* Thêm một helper function để lấy orderId */}
                     {(() => {
                       // Cố gắng lấy orderId theo nhiều cách
                       let orderId = null;
-                      
+
                       // Kiểm tra từng trường hợp có thể xảy ra
                       if (dispute.orderItemId?.orderId?._id) {
                         // Trường hợp orderId là một đối tượng đã được populate
@@ -239,10 +279,10 @@ const MyDisputes = () => {
                         // Trường hợp orderId là một string id
                         orderId = dispute.orderItemId.orderId;
                       }
-                      
+
                       // Log ra để debug
                       console.log("Order ID for dispute:", orderId);
-                      
+
                       // Chỉ hiển thị liên kết nếu có orderId
                       if (orderId) {
                         return (
@@ -268,7 +308,7 @@ const MyDisputes = () => {
           ))}
         </motion.div>
       ) : (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white border rounded-xl p-12 text-center shadow-sm max-w-lg mx-auto"
@@ -278,7 +318,7 @@ const MyDisputes = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">No Disputes Found</h2>
           <p className="text-gray-600 mb-6">
-            {searchQuery || statusFilter ? 
+            {searchQuery || statusFilter ?
               'No disputes match your current filters. Try changing your search criteria.' :
               'You have not filed any disputes yet.'}
           </p>
