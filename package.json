@@ -1,0 +1,25 @@
+{
+  "name": "nginx-load-balancer-demo",
+  "version": "1.0.0",
+  "description": "Demo application for Nginx load balancing",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "node test-load-balancer.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "nginx",
+    "load-balancer",
+    "nodejs",
+    "express"
+  ],
+  "author": "Load Balancer Demo",
+  "license": "MIT"
+}
