@@ -6,6 +6,7 @@ const cors = require("cors");
 const { initScheduler } = require("./src/config/scheduler");
 const http = require("http");
 const { initSocketServer } = require("./src/services/socketService");
+const { initRedis } = require("./src/config/redis");
 
 const complaintRoutes = require("./src/routers/complaintRoutes.js");
 
@@ -50,6 +51,13 @@ app.use("/api/complaints", complaintRoutes);
 const PORT = process.env.PORT;
 const MONGO_URI = process.env.MONGO_URI;
 
+// Initialize Redis (optional - app will work without it)
+initRedis()
+  .then(() => console.log("Redis initialized successfully"))
+  .catch((err) => {
+    console.warn("Redis initialization failed (app will continue without Redis):", err.message);
+  });
+
 // Improve MongoDB connection with error handling
 console.log("Connecting to MongoDB...");
 connect(MONGO_URI)
@@ -60,6 +68,17 @@ connect(MONGO_URI)
   });
 
 app.use("/api", router);
+
+// Health check endpoint for load balancer
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    pid: process.pid,
+    memory: process.memoryUsage()
+  });
+});
 
 // Fallback route for handling payment redirects
 app.get("/", (req, res) => {
@@ -88,7 +107,11 @@ app.set("io", io);
 server.listen(PORT, () => {
   console.log(`Server is running at PORT ${PORT}`);
   console.log(`WebSocket server is running`);
+  console.log(`Worker PID: ${process.pid}`);
 
   // Initialize schedulers after server starts
   initScheduler();
 });
+
+// Store server instance globally for graceful shutdown
+global.server = server;

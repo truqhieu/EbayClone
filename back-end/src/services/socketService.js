@@ -2,8 +2,10 @@ const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const { User, Message, Conversation } = require('../models');
 const logger = require('../utils/logger');
+const { getRedisAdapter, cache } = require('../config/redis');
 
 // Map to store online users: { userId: socketId }
+// In cluster mode, this will be shared via Redis
 const onlineUsers = new Map();
 
 // Initialize Socket.IO server
@@ -16,6 +18,15 @@ const initSocketServer = (server) => {
     },
     transports: ['websocket', 'polling']
   });
+
+  // Set up Redis adapter for multi-instance Socket.IO
+  try {
+    const adapter = getRedisAdapter();
+    io.adapter(adapter);
+    logger.info('Socket.IO Redis adapter initialized');
+  } catch (error) {
+    logger.warn('Redis adapter not available, using default adapter:', error.message);
+  }
 
   // Authentication middleware for Socket.IO
   io.use(async (socket, next) => {
@@ -36,12 +47,23 @@ const initSocketServer = (server) => {
   });
 
   // Connection handler
-  io.on('connection', (socket) => {
+  io.on('connection', async (socket) => {
     const userId = socket.user.id;
-    logger.info(`User connected: ${userId}`);
+    logger.info(`User connected: ${userId} (PID: ${process.pid})`);
     
     // Add user to online users map
     onlineUsers.set(userId, socket.id);
+    
+    // Store online status in Redis for cross-instance awareness
+    try {
+      await cache.set(`user:${userId}:online`, {
+        socketId: socket.id,
+        pid: process.pid,
+        timestamp: Date.now()
+      }, 3600); // 1 hour TTL
+    } catch (error) {
+      logger.error('Error storing user online status in Redis:', error);
+    }
     
     // Broadcast user online status
     io.emit('userStatus', { userId, status: 'online' });
@@ -164,11 +186,18 @@ const initSocketServer = (server) => {
     });
     
     // Handle disconnect
-    socket.on('disconnect', () => {
-      logger.info(`User disconnected: ${userId}`);
+    socket.on('disconnect', async () => {
+      logger.info(`User disconnected: ${userId} (PID: ${process.pid})`);
       
       // Remove user from online users map
       onlineUsers.delete(userId);
+      
+      // Remove online status from Redis
+      try {
+        await cache.del(`user:${userId}:online`);
+      } catch (error) {
+        logger.error('Error removing user online status from Redis:', error);
+      }
       
       // Broadcast user offline status
       io.emit('userStatus', { userId, status: 'offline' });
